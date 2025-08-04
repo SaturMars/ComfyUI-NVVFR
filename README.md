@@ -66,24 +66,12 @@ ComfyUI node for video super-resolution and frame interpolation using NVEncC.
 
 ## Troubleshooting
 
-### Video preview not displaying
-
-1. Check browser console for JavaScript errors
-2. Confirm that the video file was successfully generated
-3. Refresh the ComfyUI page and try again
-4. Ensure browser supports HTML5 video
-
-### Video cannot play
-
-1. Check if the video file format is supported
-2. Confirm the video file path is correct
-3. Check if the browser supports the video encoding format
-
 ### Encoding failed
 
 1. Confirm that NVEncC64.exe file exists in the nvenc folder
 2. Check if the input video file exists and is readable
 3. View error information in the console output
+4. GPU MUST ABOVE NVIDIA RTX 20 Series
 
 ## Changelog
 
