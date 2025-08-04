@@ -22,8 +22,8 @@ class NVVFRNode:
                 "codec": (["h264", "h265"], {"default": "h265"}),
                 "quality": (["high", "medium", "low"], {"default": "high"}),
                 "enable_superres": ("BOOLEAN", {"default": True}),
-                "superres_strength": ("FLOAT", {"default": 0.4, "min": 0.0, "max": 1.0, "step": 0.1}),
-                "enable_double_frame": ("BOOLEAN", {"default": True}),
+                "superres_strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.1}),
+                "enable_double_frame": ("BOOLEAN", {"default": False}),
                 "width": ("INT", {"default": 1920, "min": 64, "max": 8192}),
                 "height": ("INT", {"default": 1080, "min": 64, "max": 8192}),
                 "depth": (["8bit", "10bit"], {"default": "10bit"}),                
@@ -38,7 +38,7 @@ class NVVFRNode:
     OUTPUT_NODE = True
     
     def process_video(self, video_path, output_prefix, codec, quality, enable_superres, enable_double_frame, 
-                     width=1920, height=1080, depth="10bit", superres_strength=0.4):
+                     width=1920, height=1080, depth="10bit", superres_strength=1.0):
         """
         处理视频文件
         """
@@ -130,7 +130,9 @@ class NVVFRNode:
                 raise RuntimeError(f"NVEncC failed with return code {process.returncode}. Error: {stderr.decode('utf-8')}")
             
             print(f"Video processing completed successfully. Output saved to: {output_path}")
-            return (output_path,)
+            
+            # 返回输出路径给前端用于预览
+            return {"ui": {"output_path": ((output_path),)}, "result": ((output_path),)}
 
         except Exception as e:
             raise RuntimeError(f"Error processing video: {str(e)}")

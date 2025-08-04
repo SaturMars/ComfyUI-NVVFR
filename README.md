@@ -14,14 +14,18 @@ ComfyUI node for video super-resolution and frame interpolation using NVEncC.
 
 ## Installation
 
-1. Copy this folder to the `custom_nodes` directory of ComfyUI or use git clone command.
-2. Download the NVEnc binary dependencies:
+1. Download the NVIDIA Video Effects SDK for your graphics card:
+   - Go to https://www.nvidia.com/en-us/geforce/broadcasting/broadcast-sdk/resources/
+   - Download the Video Effects SDK corresponding to your graphics card
+   - Supports NVIDIA 20 series graphics cards and above
+2. Copy this folder to the `custom_nodes` directory of ComfyUI or use git clone command.
+3. Download the NVEnc binary dependencies:
    - Go to the [NVEnc Releases page](https://github.com/rigaya/NVEnc/releases)
    - Download the x64 version
    - Extract the contents to the `nvenc` folder in this node directory
    - Like this `ComfyUI\custom_nodes\ComfyUI-NVVFR\nvenc`
-3. Restart ComfyUI
-4. Find the "NVVFR Video Processor" node in the node list
+4. Restart ComfyUI
+5. Find the "NVVFR Video Processor" node in the node list
 
 ## Usage
 

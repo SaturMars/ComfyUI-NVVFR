@@ -11,14 +11,18 @@ ComfyUI节点，使用NVEncC进行视频超分补帧处理。
 
 ## 安装方法
 
-1. 将此节点文件夹复制到ComfyUI的`custom_nodes`目录中，或使用 git clone 命令。
-2. 下载NVEnc二进制依赖包：
+1. 下载对应显卡的NVIDIA Video Effects SDK：
+   - 前往 https://www.nvidia.com/en-us/geforce/broadcasting/broadcast-sdk/resources/
+   - 下载对应显卡的Video Effects SDK
+   - 支持NVIDIA 20系以上显卡
+2. 将此节点文件夹复制到ComfyUI的`custom_nodes`目录中，或使用 git clone 命令。
+3. 下载NVEnc二进制依赖包：
    - 前往 [NVEnc Releases页面](https://github.com/rigaya/NVEnc/releases)
    - 下载x64版本
    - 将压缩包内容解压到节点目录的`nvenc`文件夹中
    - 形如 `ComfyUI\custom_nodes\ComfyUI-NVVFR\nvenc`
-3. 重启ComfyUI
-4. 在节点列表中找到"NVVFR Video Processor"节点
+4. 重启ComfyUI
+5. 在节点列表中找到"NVVFR Video Processor"节点
 
 ## 使用方法
 
