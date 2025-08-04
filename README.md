@@ -35,7 +35,7 @@ ComfyUI node for video super-resolution and frame interpolation using NVEncC.
    - Double frame rate: Enable/Disable frame rate conversion
    - Output resolution: Set width and height
    - Color depth: 8bit or 10bit
-4. Run the node, video preview will automatically display after processing is complete
+4. Run the node, wait until finish.
 
 ## Parameter Description
 
@@ -55,14 +55,12 @@ ComfyUI node for video super-resolution and frame interpolation using NVEncC.
 ### Output Parameters
 
 - **video_path**: Output video file path
-- **Video preview**: HTML video preview interface
 
 ## Notes
 
 1. Ensure NVEncC is installed on the system and included in the nvenc folder
 2. H.264 encoder does not support 10bit color depth, will automatically downgrade to 8bit
-3. Video preview feature requires modern browser support for HTML5 video
-4. Output files are saved in the ComfyUI output directory
+3. Output files are saved in the ComfyUI output directory
 
 ## Troubleshooting
 
