@@ -17,7 +17,6 @@ class NVVFRNode:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "video_path": ("STRING", {"default": ""}),
                 "output_prefix": ("STRING", {"default": "ComfyUI"}),
                 "codec": (["h264", "h265"], {"default": "h265"}),
                 "quality": (["high", "medium", "low"], {"default": "high"}),
@@ -27,6 +26,11 @@ class NVVFRNode:
                 "width": ("INT", {"default": 1920, "min": 64, "max": 8192}),
                 "height": ("INT", {"default": 1080, "min": 64, "max": 8192}),
                 "depth": (["8bit", "10bit"], {"default": "10bit"}),                
+            },
+            "optional": {
+                "video_path": ("STRING", {"default": ""}),
+                "imagelist": ("STRING", {"default": ""}),
+                "original_frame_rate": ("FLOAT", {"default": 30.0, "min": 1.0, "max": 120.0, "step": 0.1}),
             }
         }
 
@@ -38,17 +42,93 @@ class NVVFRNode:
     OUTPUT_NODE = True
     
     def process_video(self, video_path, output_prefix, codec, quality, enable_superres, enable_double_frame, 
-                     width=1920, height=1080, depth="10bit", superres_strength=1.0):
+                     width=1920, height=1080, depth="10bit", superres_strength=1.0, imagelist="", original_frame_rate=30.0):
         """
-        处理视频文件
+        处理视频文件或图像序列
         """
         # 检查NVEncC64.exe是否存在
         if not os.path.exists(self.nvenc_path):
             raise FileNotFoundError(f"NVEncC64.exe not found at {self.nvenc_path}")
         
-        # 检查输入视频文件是否存在
-        if not os.path.exists(video_path):
+        # 检查video_path和imagelist不能同时为空
+        if not video_path and not imagelist:
+            raise ValueError("Either video_path or imagelist must be provided")
+        
+        # 如果有imagelist，检查original_frame_rate是否为空
+        if imagelist and original_frame_rate <= 0:
+            raise ValueError("original_frame_rate must be provided when imagelist is used")
+        
+        # 如果有video_path，检查文件是否存在
+        if video_path and not os.path.exists(video_path):
             raise FileNotFoundError(f"Input video file not found: {video_path}")
+        
+        avs_file_path = None
+        # 如果有imagelist，生成avs文件
+        if imagelist:
+            # 解析imagelist（假设是逗号分隔的图像路径）
+            image_paths = [path.strip() for path in imagelist.split(',') if path.strip()]
+            
+            if not image_paths:
+                raise ValueError("imagelist must contain valid image paths")
+            
+            # 检查图像文件是否存在
+            for img_path in image_paths:
+                if not os.path.exists(img_path):
+                    raise FileNotFoundError(f"Image file not found: {img_path}")
+            
+            # 在ComfyUI临时文件夹创建avs文件
+            temp_dir = folder_paths.get_temp_directory()
+            avs_file_path = os.path.join(temp_dir, f"{output_prefix}_input.avs")
+            
+            # 生成avs文件内容（UTF-8编码）
+            # 使用ImageSource处理图像序列
+            if len(image_paths) == 1:
+                # 单张图像
+                avs_content = f"ImageSource(\"{image_paths[0]}\", fps={original_frame_rate})\n"
+            else:
+                # 多张图像序列
+                # 提取公共路径和文件名模式
+                first_path = image_paths[0]
+                last_path = image_paths[-1]
+                
+                # 尝试提取文件名模式（假设文件名有数字序列）
+                import glob
+                dir_path = os.path.dirname(first_path)
+                if not dir_path:
+                    dir_path = "."
+                
+                # 获取目录中所有匹配的图像文件
+                pattern = os.path.join(dir_path, "*.png")  # 支持PNG
+                image_files = sorted(glob.glob(pattern))
+                if not image_files:
+                    pattern = os.path.join(dir_path, "*.jpg")  # 支持JPG
+                    image_files = sorted(glob.glob(pattern))
+                if not image_files:
+                    pattern = os.path.join(dir_path, "*.jpeg")  # 支持JPEG
+                    image_files = sorted(glob.glob(pattern))
+                if not image_files:
+                    pattern = os.path.join(dir_path, "*.bmp")  # 支持BMP
+                    image_files = sorted(glob.glob(pattern))
+                
+                if image_files:
+                    # 使用ImageSource的序列模式
+                    avs_content = f"ImageSource(\"{image_files[0]}\", end={len(image_files)}, fps={original_frame_rate})\n"
+                else:
+                    # 回退到使用Interleave
+                    avs_content = "Interleave(\n"
+                    for i, img_path in enumerate(image_paths):
+                        avs_content += f"  ImageSource(\"{img_path}\", fps={original_frame_rate})"
+                        if i < len(image_paths) - 1:
+                            avs_content += ",\n"
+                        else:
+                            avs_content += "\n"
+                    avs_content += ")\n"
+            
+            # 写入avs文件（UTF-8编码）
+            with open(avs_file_path, 'w', encoding='utf-8') as f:
+                f.write(avs_content)
+            
+            print(f"Generated AVS file: {avs_file_path}")
         
         # 检查编码器和深度的兼容性
         if codec.lower() == "h264" and depth.lower() == "10bit":
@@ -110,7 +190,10 @@ class NVVFRNode:
             cmd.extend(["--vpp-fruc", "double"])
         
         # 添加输入和输出文件
-        cmd.extend(["-i", video_path])
+        if avs_file_path:
+            cmd.extend(["--avs", avs_file_path])
+        else:
+            cmd.extend(["-i", video_path])
         cmd.extend(["--output", output_path])
         
         try:
@@ -136,6 +219,15 @@ class NVVFRNode:
 
         except Exception as e:
             raise RuntimeError(f"Error processing video: {str(e)}")
+        
+        finally:
+            # 清理临时avs文件
+            if avs_file_path and os.path.exists(avs_file_path):
+                try:
+                    os.remove(avs_file_path)
+                    print(f"Cleaned up temporary AVS file: {avs_file_path}")
+                except Exception as e:
+                    print(f"Warning: Failed to remove temporary AVS file: {e}")
 
 WEB_DIRECTORY = "./js"
 

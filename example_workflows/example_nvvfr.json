@@ -558,7 +558,6 @@
         "Node name for S&R": "NVVFR"
       },
       "widgets_values": [
-        "",
         "ComfyUI",
         "h265",
         "high",
@@ -567,7 +566,10 @@
         true,
         1920,
         1080,
-        "10bit"
+        "10bit",
+        "",
+        "",
+        30
       ]
     }
   ],
